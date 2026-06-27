@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>888WIN</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Configurações do PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#eab308">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Script de Registro do Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado!', reg))
+                    .catch(err => console.log('Erro no Service Worker:', err));
+            });
+        }
+    </script>
+
+    <style>
+        :root {
+            --primary-color: #eab308; 
+            --bg-main: #000000;
+            --bg-panel: #0b0c0f;
+            --bg-card: #121318;
+            --bg-input: #1a1c23;
+            --border-color: #2d3139;
+            --text-main: #ffffff;
+            --text-muted: #7a7e85;
+            --text-desc: #52565e;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* TELA DE LOGIN ESTILO NEYMAR (THE LAST DANCE) */
+        .login-screen {
+            width: 360px;
+            height: 740px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, #0b0c0f 100%), 
+                        url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop') center/cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            position: absolute;
+            z-index: 999;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.9);
+            transition: all 0.5s ease;
+            text-align: center;
+        }
+
+        .neymar-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid #eab308;
+            object-fit: cover;
+            margin-bottom: 16px;
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.6);
+        }
+
+        .login-logo {
+            font-size: 36px;
+            font-weight: 900;
+            color: #eab308;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .login-subtitle {
+            color: #ffffff;
+            font-size: 13px;
+            font-style: italic;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            font-weight: 300;
+            text-transform: uppercase;
+        }
+
+        .login-box {
+            width: 100%;
+            background-color: rgba(18, 19, 24, 0.95);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* CONTAINER DO APP PRINCIPAL */
+        .phone-container {
+            width: 360px;
+            height: 740px;
+            background-color: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+            filter: blur(10px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .phone-container.active {
+            filter: blur(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Header */
+        .header {
+            background-color: var(--primary-color);
+            padding: 16px;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .header-title {
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        /* Conteúdo principal */
+        .content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Painéis e Cards */
+        .panel {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Opções Selecionáveis */
+        .option-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .option-item.selectable {
+            border: 2px solid transparent;
+            background-color: transparent;
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .option-item.selectable.active {
+            border-color: var(--primary-color);
+            background-color: rgba(234, 179, 8, 0.05);
+        }
+
+        .option-title {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .option-desc {
+            font-size: 12px;
+            color: var(--text-desc);
+        }
+
+        /* Switches */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #3e424b;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #9ca3af;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+            background-color: white;
+        }
+
+        /* Botões */
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: #1e293b;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Inputs */
+        .input-field {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+            text-align: center;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* Console / Logs */
+        .console-box {
+            background-color: #050507;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            height: 140px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+            color: #38bdf8;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* Infos e Status */
+        .status-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+        }
+
+        .badge-online {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: var(--accent-green);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timer-highlight {
+            font-size: 20px;
+            font-family: monospace;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-align: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+        }
+
+        /* Overlay Fullscreen */
+        .overlay-fullscreen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #000000;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #1e293b;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Barra de Navegação */
+        .navbar {
+            background-color: var(--bg-panel);
+            height: 65px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .nav-item {
+            color: #3e424b;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+
+        .nav-item span {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-screen" id="loginScreen">
+        <img src="logo.jpg" class="neymar-avatar" alt="888WIN Logo">
+        <div class="login-logo">888WIN</div>
+        <div class="login-subtitle">The Last Dance</div>
+        
+        <div class="login-box">
+            <input type="text" id="keyInput" class="input-field" placeholder="DIGITE SUA KEY DE ACESSO">
+            <button class="btn" onclick="validateLogin()">Entrar no Painel</button>
+            <div id="loginError" style="color:var(--accent-red); font-size:12px; text-align:center; display:none; font-weight:600;">
+                Key incorreta! Tente novamente.
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-container" id="appContainer">
+        
+        <div class="header" id="appHeader">
+            <div class="header-title">888WIN</div>
+            <i class="fas fa-crown" style="color: white; font-size: 18px;"></i>
+        </div>
+
+        <div class="content">
+            
+            <div id="tab-game" class="tab-content active">
+                <div class="panel">
+                    <div class="option-item">
+                        <div>
+                            <div class="option-title">Precisão</div>
+                            <div class="option-desc">HS que faz a mira não passar.</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="feature-precision">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="option-item selectable active" onclick="selectHs(this)">
+                        <div class="option-title">HS Alto</div>
+                        <div class="option-desc">HS acima da cabeça.</div>
+                    </div>
+
+                    <div class="option-item selectable" onclick="selectHs(this)">
+                        <div class="option-title">HS Alto + Neck</div>
+                        <div class="option-desc">HS alto com pescoço.</div>
+                    </div>
+
+                    <div class="option-item selectable" onclick="selectHs(this)">
+                        <div class="option-title">HS Caveira</div>
+                        <div class="option-desc">HS abaixo do pescoço.</div>
+                    </div>
+
+                    <div class="option-item selectable" onclick="selectHs(this)">
+                        <div class="option-title">HS Neck</div>
+                        <div class="option-desc">HS pescoço legit.</div>
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary" onclick="changeTheme()">Mudar Tema do Layout</button>
+
+                <div class="panel">
+                    <div class="option-title" style="margin-bottom: 4px;">Exemplo Game <span style="font-size:11px; color:var(--text-desc)">1.123.1</span></div>
+                    <button class="btn" onclick="launchGame()">Launch (Injetar e Abrir)</button>
+                </div>
+            </div>
+
+            <div id="tab-bypass" class="tab-content">
+                <div class="panel">
+                    <div class="panel-title">Módulos Anti-Ban</div>
+                    <div class="option-desc">Limpeza completa de rastros e proteção de tráfego Proxy.</div>
+                </div>
+                
+                <button class="btn" id="btnCleanLogs" onclick="cleanProxyLogs()">Limpar Logs do Proxy</button>
+                
+                <div class="panel">
+                    <div class="panel-title">Console de Operações</div>
+                    <div class="console-box" id="bypassConsole">
+                        <div>[SISTEMA] Aguardando comando de limpeza...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-settings" class="tab-content">
+                <div class="panel">
+                    <div class="panel-title">Device Connection</div>
+                    <div class="option-desc" style="color: var(--accent-green); font-weight: bold;">
+                        <i class="fas fa-check-circle"></i> Device Connected
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Device Pairing</div>
+                    <div class="option-desc">Pareamento inteligente direto com a API do celular.</div>
+                    <button class="btn" id="btnAutoPair" onclick="runAutoPairing()">Pareamento Automático (Via Script)</button>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Logs de Conexão</div>
+                    <div class="console-box" id="pairConsole" style="height: 110px;">
+                        <div>[SYS] Canal de conexão estável ativo.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-info" class="tab-content">
+                <div class="panel">
+                    <div class="status-container">
+                        <span class="option-title" style="font-size:15px;">Status do Painel:</span>
+                        <span class="badge-online">ONLINE</span>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Dados da Licença</div>
+                    <div class="option-desc" style="margin-bottom: 6px;">
+                        <strong>Key Ativa:</strong> <span style="font-family:monospace; color:var(--primary-color)">PROXI-ANDROID-MJ-3</span>
+                    </div>
+                    <div class="option-desc" style="margin-bottom: 12px;">
+                        <strong>Validade:</strong> 3 Days (Ininterrupto)
+                    </div>
+                    
+                    <div class="panel-title" style="font-size:12px; margin-bottom:4px;">Tempo Restante</div>
+                    <div class="timer-highlight" id="countdownTimer">03d 00h 00m 00s</div>
+                </div>
+
+                <div class="panel" style="border-left: 4px solid var(--primary-color);">
+                    <div class="panel-title">Créditos de Criação</div>
+                    <div style="font-weight: bold; color: #ffffff; font-size: 15px; letter-spacing: 0.5px;">DEV: MIGUEL</div>
+                    <div style="color: var(--text-desc); font-size: 12px; margin-top: 2px;">VERSION 1.0.0 (BUILD 3)</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="overlay-fullscreen" id="overlayScreen">
+            <div class="spinner" id="overlaySpinner"></div>
+            <div id="overlayText" style="font-weight:bold; font-size:15px; text-align:center; letter-spacing:0.5px;">Processando...</div>
+        </div>
+
+        <div class="navbar">
+            <div class="nav-item active" onclick="switchTab('game', this)">
+                <i class="fas fa-gamepad"></i>
+                <span>Game</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('bypass', this)">
+                <i class="fas fa-user-secret"></i>
+                <span>Bypass</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('settings', this)">
+                <i class="fas fa-link"></i>
+                <span>Conexão</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('info', this)">
+                <i class="fas fa-info-circle"></i>
+                <span>Infos</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const themes = [
+            { primary: '#eab308', name: 'Dourado Neymar' },
+            { primary: '#ef4444', name: 'Vermelho Fúria' },
+            { primary: '#3b82f6', name: 'Azul Proxi' },
+            { primary: '#10b981', name: 'Verde Matrix' },
+            { primary: '#a855f7', name: 'Roxo Neon' }
+        ];
+        let currentThemeIndex = 0;
+
+        const KEY_DURATION = 3 * 24 * 60 * 60 * 1000;
+        let endTime = localStorage.getItem('proxi_key_endtime');
+
+        function startTimer() {
+            if (!endTime) {
+                endTime = Date.now() + KEY_DURATION;
+                localStorage.setItem('proxi_key_endtime', endTime);
+            }
+
+            function updateCountdown() {
+                let now = Date.now();
+                let distance = endTime - now;
+
+                if (distance < 0) {
+                    document.getElementById('countdownTimer').innerHTML = "EXPIRADO";
+                    document.getElementById('countdownTimer').style.color = "var(--accent-red)";
+                    clearInterval(timerInterval);
+                    return;
+                }
+
+                let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                days = String(days).padStart(2, '0');
+                hours = String(hours).padStart(2, '0');
+                minutes = String(minutes).padStart(2, '0');
+                seconds = String(seconds).padStart(2, '0');
+
+                document.getElementById('countdownTimer').innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            }
+
+            updateCountdown();
+            const timerInterval = setInterval(updateCountdown, 1000);
+        }
+
+        function validateLogin() {
+            const keyEntered = document.getElementById('keyInput').value.trim();
+            const correctKey = "PROXI-ANDROID-MJ-3";
+
+            if (keyEntered === correctKey) {
+                document.getElementById('loginScreen').style.opacity = '0';
+                document.getElementById('loginScreen').style.pointerEvents = 'none';
+                document.getElementById('appContainer').classList.add('active');
+                
+                startTimer();
+            } else {
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.style.display = 'block';
+                setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+            }
+        }
+
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.add('active');
+            element.classList.add('active');
+        }
+
+        function selectHs(element) {
+            document.querySelectorAll('.option-item.selectable').forEach(i => i.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function changeTheme() {
+            currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+            const selectedTheme = themes[currentThemeIndex];
+            
+            document.documentElement.style.setProperty('--primary-color', selectedTheme.primary);
+            document.getElementById('appHeader').style.backgroundColor = selectedTheme.primary;
+        }
+
+        function runAutoPairing() {
+            const consoleBox = document.getElementById('pairConsole');
+            const btn = document.getElementById('btnAutoPair');
+            
+            btn.disabled = true;
+            btn.innerText = "Pareando...";
+            
+            consoleBox.innerHTML = "<div>[+] Escaneando portas locais do Android...</div>";
+            
+            const logsPareamento = [
+                "[INFO] Identificando arquitetura do dispositivo...",
+                "[+] Carregando script de pareamento sem fio...",
+                "[-] Tentando estabelecer ponte via Localhost:5555...",
+                "[✓] Handshake com o sistema operacional aceito.",
+                "[INFO] Sincronizando privilégios ADB internos...",
+                "[✓] SUCESSO: Aparelho emparelhado e otimizado via Script!"
+            ];
+
+            logsPareamento.forEach((msg, index) => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.innerText = msg;
+                    if(msg.includes('[✓]')) line.style.color = "var(--accent-green)";
+                    if(msg.includes('[-]')) line.style.color = "var(--primary-color)";
+                    consoleBox.appendChild(line);
+                    consoleBox.scrollTop = consoleBox.scrollHeight;
+                    
+                    if(index === logsPareamento.length - 1) {
+                        btn.disabled = false;
+                        btn.innerText = "Pareamento Automático (Via Script)";
+                    }
+                }, (index + 1) * 700);
+            });
+        }
+
+        function cleanProxyLogs() {
+            const consoleBox = document.getElementById('bypassConsole');
+            const btn = document.getElementById('btnCleanLogs');
+            
+            btn.disabled = true;
+            btn.innerText = "Limpando...";
+            
+            consoleBox.innerHTML = "<div>[+] Inicializando varredura de diretórios...</div>";
+            
+            const logsSimulados = [
+                "[+] Buscando pastas ocultas do sistema...",
+                "[INFO] Analisando /data/root/proxy_cache...",
+                "[-] Arquivo de log encontrado: cache_0023.log (42KB)",
+                "[✓] cache_0023.log deletado com sucesso.",
+                "[-] Arquivo de log encontrado: proxy_dump.bin (1.2MB)",
+                "[✓] proxy_dump.bin limpo permanentemente.",
+                "[INFO] Limpando rastros de conexões DNS falsas...",
+                "[+] Flush DNS efetuado nos servidores internos do app.",
+                "[✓] STATUS: Todos os logs do Proxy foram limpos com sucesso!"
+            ];
+
+            logsSimulados.forEach((msg, index) => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.innerText = msg;
+                    if(msg.includes('[✓]')) line.style.color = "var(--accent-green)";
+                    if(msg.includes('[-]')) line.style.color = "var(--accent-red)";
+                    consoleBox.appendChild(line);
+                    consoleBox.scrollTop = consoleBox.scrollHeight;
+                    
+                    if(index === logsSimulados.length - 1) {
+                        btn.disabled = false;
+                        btn.innerText = "Limpar Logs do Proxy";
+                    }
+                }, (index + 1) * 600);
+            });
+        }
+
+        function launchGame() {
+            const overlay = document.getElementById('overlayScreen');
+            const overlayText = document.getElementById('overlayText');
+            
+            overlay.style.display = 'flex';
+            overlayText.innerText = "Injetando scripts de otimização...";
+            overlayText.style.color = "#ffffff";
+
+            setTimeout(() => { 
+                overlay.style.display = 'none'; 
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
